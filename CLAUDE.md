@@ -1,38 +1,31 @@
 # Claude Code instructions — The Vitrine Marketing Agent
 
 ## Non-negotiable constraints
-- €0 additional recurring cost. No paid APIs, no billing details, no Supabase/Neon/database.
-- Claude Pro is used manually via copy/paste prompts; Claude Pro does NOT include Claude API credits.
-- Next.js static export (`output: export`), browser localStorage, JSON backups.
-- Do not add API routes, server actions, middleware, external AI SDKs or automatic publishing without explicit permission.
-- Keep the app usable without external accounts or secrets.
+- €0 recurring cost. No paid APIs, no Supabase, no database, no backend, no API routes.
+- Claude Pro is used manually through copy/paste. Claude Pro does NOT include API credits, so never add an AI SDK or API key.
+- Never claim or implement automatic social-media publishing. "Programmé" means planned in the calendar.
+- Data stays in browser localStorage, with JSON backup and restore. Keep the app usable offline and without accounts.
+- French UI, professional tone. Never invent client results, reviews, prices or offers in seed content or prompts.
 
 ## Brand
-- The Vitrine, French web-design and digital-marketing studio; thevitrine.fr.
-- Navy #081227, amber #FFC27D, cream #F6F2EA.
-- French default, professional human tone; no invented client results, reviews, pricing or offers.
-- Instagram visuals: 4:5 1080×1350, no text/logos/hands/faces by default; videos 9:16, often 8 seconds.
+Navy `#081227`, amber `#FFC27D`, cream `#F6F2EA`. Fonts: Fraunces (headings) and Inter (text), self-hosted via @fontsource.
 
-## Features
-Six prompt builders: strategy, social, creative, calendar, SEO/GEO, analytics. Manual Claude Pro copy/paste workflow. Editable drafts, campaigns, editorial calendar, CSV export, JSON backup/restore. Human approval required before publishing.
+## Commands
+- `npm run dev`: Vite dev server.
+- `npm run verify`: eslint, then vitest, then `tsc -b`, then `vite build`. It must pass before every commit.
+- `npm run preview`: serves `dist/` with the production CSP. Use it to catch CSP violations.
 
-## Development priorities
-1. Run `npm install`, `npm run lint`, `npm run build`; fix any issues.
-2. Add client-side schema validation for imported backups and resilient storage/quota handling.
-3. Add calendar month view and filters by campaign/platform.
-4. Add editable brand settings, reusable prompt templates and analytics CSV import.
-5. Add automated tests for prompt builders and backup validation.
-6. Improve accessibility, mobile layout and keyboard navigation.
+## Architecture
+- `src/lib/*`: pure, framework-free logic with unit tests next to it (`*.test.ts`). Put new logic here first.
+- `src/lib/types.ts` is the domain model. `src/lib/schema.ts` validates untrusted data with Zod and checks references.
+- **Changing the data model:** update `types.ts`, `schema.ts` (with a `.default()` so old backups still load), `defaults.ts` and the backup tests. Bump `schemaVersion` and add a migration in `backup.ts` only for breaking changes.
+- `src/state/store.tsx`: a single store built on `useSyncExternalStore`. All mutations go through `actions`. Store updates are synchronous; use `useStoreApi().getState()` to read state right after an action.
+- Workflow rules live in `src/lib/workflow.ts`. Status changes only through `applyTransition`. `applyEdit` never changes status or history, and sends edited approved content back to review.
+- Claude prompts: `src/lib/prompts.ts` builds them, `src/lib/parseResponse.ts` parses pasted answers and tolerates key/accent variants. Built-in templates live in `src/lib/defaults.ts`, and `withBuiltins()` adds new ones to existing users on load.
+- Routing is hash-based (`src/router.ts`), so it works on any static host without rewrites.
+- Modals use `<dialog>` (`components/ui.tsx`). Confirmations use `useUI().confirm()`, never `window.confirm`.
 
-## Safety
-Never expose secrets in frontend code. Never claim auto-publishing or API integrations are live. Browser data is not encrypted and is not synced; remind users to export backups. Free Vercel Hobby may restrict commercial use: verify eligibility or use a free commercial-compatible static host.
-
-## v2.1 changes and next engineering steps
-- Offline content templates: `lib/content-templates.ts`; keep them deterministic and reviewable.
-- Studio supports instant editable draft generation; calendar supports month navigation; publications have full-text local search.
-- Validate TS/Next build after `npm install` in a networked environment; dependency install was not available in the build environment.
-- Add automated unit/e2e tests, accessible modal confirmations, improved mobile calendar and optional IndexedDB storage. Never introduce paid services or API keys without explicit consent.
-
-## v2.2 handover
-
-Added `lib/marketing-tools.ts` (pure offline metric ratios, publication QA, CSV cell safety) and a new `tools` tab in `app/page.tsx`. Check the TypeScript compilation and static export before deploying. Prioritise accessibility, backup schema migration, localStorage quota error handling, and browser-level smoke tests. No database or paid APIs.
+## Quality bar
+- TypeScript strict, no `any`. Keep the 375px layout free of horizontal scroll (CSS breakpoints are at 1100, 1023 and 760px).
+- Every new user flow gets a test in `src/test/flows.test.tsx`.
+- Keep the honesty notices in the UI: no auto-publishing, no AI calls, data stays local, reminders to back up.

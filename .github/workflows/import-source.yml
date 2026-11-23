@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Extract project source
         run: |
-          base64 -d source-bundle.txt | tar -xz -C .
+          base64 -d source-bundle.txt | tar -xJ -C .
           rm source-bundle.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
